@@ -72,18 +72,21 @@ def processRequest(req):
         return {}
 
 def retrieveSymptom(req):
-    sent = req.get("result").get("resolvedQuery").lower()
     ans = []
-    for symptom in SymptomList:
-        delimiters = " ", "-"
-        regexPattern = '|'.join(map(re.escape, delimiters))
-        words = re.split(regexPattern, symptom)
-        check = True
-        for word in words:
-            if word not in sent:
-                check = False
-                break
-        ans.append(symptom)
+    try:
+        sent = req.get("result").get("resolvedQuery").lower()
+        for symptom in SymptomList:
+            delimiters = " ", "-"
+            regexPattern = '|'.join(map(re.escape, delimiters))
+            words = re.split(regexPattern, symptom)
+            check = True
+            for word in words:
+                if word not in sent:
+                    check = False
+                    break
+            ans.append(symptom)
+    except Exception as e:
+        print("Error:" + e)
         return ans
 
 def addSymptomInList(req, symptoms):
