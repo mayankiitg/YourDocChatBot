@@ -48,6 +48,7 @@ def processRequest(req):
         if req.get("result").get("action") == "add_symptom":
             print("Action: add_symptom")
             symptoms = retrieveSymptom(req)
+            print("Symptoms detected" + " ".join(symptoms))
             if len(symptoms) == 0:
                 print("No Symptom Found")
                 outStr = "Couldn't Understand the symptom. Kindly rephrase ur query."
