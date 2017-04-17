@@ -40,15 +40,22 @@ def webhook():
 
 
 def processRequest(req):
+    print("Processing Request: sessionId" + req.get("sessionId"))
+    
     if req.get("result").get("action") == "add_symptom":
-        if len(req.get("result").get("Symptoms")) == 0:
+        print("Action: add_symptom")
+        if len(req.get("result").get("parameters").get("Symptoms")) == 0:
             outStr = "Couldn't Understand the symptom. Kindly rephrase ur query."
         else:
             addSymptomInList(req)
             outStr = "Do You have any other symptom"
+
     elif req.get("result").get("action") == "predict_disease":
+        print("Action: predict_disease")
         outStr = predictDisease(req)
+    
     else:
+        print("No action Detected")
         return {}
     
     res = makeWebhookResult(outStr)
@@ -56,7 +63,7 @@ def processRequest(req):
 
 
 def addSymptomInList(req):
-    symptoms = req.get("result").get("Symptoms")    #List of string
+    symptoms = req.get("result").get("parameters").get("Symptoms")    #List of string
     sessionId = req.get("sessionId")                #String
     if sessionId in UserSymptomsData:
         UserSymptomsData[sessionId] += symptoms
