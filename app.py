@@ -86,7 +86,8 @@ def retrieveSymptom(req):
                 if word not in sent:
                     check = False
                     break
-            ans.append(symptom)
+            if check == True:
+                ans.append(symptom)
     except:
         print("Error:" )
     return ans
