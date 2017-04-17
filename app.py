@@ -18,6 +18,9 @@ from flask import make_response
 # Flask app should start in global layout
 app = Flask(__name__)
 
+#Global Variables
+UserSymptomsData = dict()   #Stores user symptoms. Key: sessionId, Data: List of Symptoms
+
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
@@ -37,66 +40,45 @@ def webhook():
 
 
 def processRequest(req):
-    if req.get("result").get("action") != "yahooWeatherForecast":
+    if req.get("result").get("action") == "add_symptom":
+        if len(req.get("result").get("Symptoms")) == 0:
+            outStr = "Couldn't Understand the symptom. Kindly rephrase ur query."
+        else:
+            addSymptomInList(req)
+            outStr = "Do You have any other symptom"
+    elif req.get("result").get("action") == "predict_disease":
+        outStr = predictDisease(req)
+    else:
         return {}
-    baseurl = "https://query.yahooapis.com/v1/public/yql?"
-    yql_query = makeYqlQuery(req)
-    if yql_query is None:
-        return {}
-    yql_url = baseurl + urlencode({'q': yql_query}) + "&format=json"
-    result = urlopen(yql_url).read()
-    data = json.loads(result)
-    res = makeWebhookResult(data)
+    
+    res = makeWebhookResult(outStr)
     return res
 
 
-def makeYqlQuery(req):
-    result = req.get("result")
-    parameters = result.get("parameters")
-    city = parameters.get("geo-city")
-    if city is None:
-        return None
+def addSymptomInList(req):
+    symptoms = req.get("result").get("Symptoms")    #List of string
+    sessionId = req.get("sessionId")                #String
+    if sessionId in UserSymptomsData:
+        UserSymptomsData[sessionId] += symptoms
+    else:
+        UserSymptomsData = symptoms
+    print("Added following symptom: in session " + str(sessionId) + " ".join(symptoms))
 
-    return "select * from weather.forecast where woeid in (select woeid from geo.places(1) where text='" + city + "')"
 
+def predictDisease(req):
+    sessionId = req.get("sessionId")                #String
+    return "Symptoms are " + (", ".join(UserSymptomsData[sessionId]))
 
-def makeWebhookResult(data):
-    query = data.get('query')
-    if query is None:
-        return {}
-
-    result = query.get('results')
-    if result is None:
-        return {}
-
-    channel = result.get('channel')
-    if channel is None:
-        return {}
-
-    item = channel.get('item')
-    location = channel.get('location')
-    units = channel.get('units')
-    if (location is None) or (item is None) or (units is None):
-        return {}
-
-    condition = item.get('condition')
-    if condition is None:
-        return {}
-
-    # print(json.dumps(item, indent=4))
-
-    speech = "Today in " + location.get('city') + ": " + condition.get('text') + \
-             ", the temperature is " + condition.get('temp') + " " + units.get('temperature')
-
+def makeWebhookResult(outStr):
     print("Response:")
-    print(speech)
+    print(outStr)
 
     return {
-        "speech": speech,
-        "displayText": speech,
+        "speech": outStr,
+        "displayText": outStr,
         # "data": data,
         # "contextOut": [],
-        "source": "apiai-weather-webhook-sample"
+        "source": "yourdoc"
     }
 
 
