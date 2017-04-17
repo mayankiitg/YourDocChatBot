@@ -9,7 +9,7 @@ from urllib.request import urlopen, Request
 from urllib.error import HTTPError
 
 import json
-import os
+import os,re
 
 from flask import Flask
 from flask import request
@@ -67,27 +67,29 @@ def processRequest(req):
         
         res = makeWebhookResult(outStr)
         return res
-    except Exception as e:
-        print("Error in Process Request. + " + e)
+    except:
+        print("Error in Process Request. + ")
         return {}
 
 def retrieveSymptom(req):
     ans = []
+    print("Inside retrieveSymptom")
     try:
         sent = req.get("result").get("resolvedQuery").lower()
         for symptom in SymptomList:
-            delimiters = " ", "-"
-            regexPattern = '|'.join(map(re.escape, delimiters))
-            words = re.split(regexPattern, symptom)
+            # delimiters = " ", "-"
+            # regexPattern = '|'.join(map(re.escape, delimiters))
+            # words = re.split(regexPattern, symptom)
+            words = symptom.split(" ")
             check = True
             for word in words:
                 if word not in sent:
                     check = False
                     break
             ans.append(symptom)
-    except Exception as e:
-        print("Error:" + e)
-        return ans
+    except:
+        print("Error:" )
+    return ans
 
 def addSymptomInList(req, symptoms):
     try:
@@ -98,8 +100,8 @@ def addSymptomInList(req, symptoms):
         else:
             UserSymptomsData[sessionId] = symptoms
         print("Added following symptom: in session " + str(sessionId) + " ".join(symptoms))
-    except Exception as e:
-        print("Error in Process Request. + " + e)
+    except:
+        print("Error in Process Request. + " )
 
 def predictDisease(req):
     sessionId = req.get("sessionId")                #String
