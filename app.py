@@ -32,7 +32,8 @@ def webhook():
     res = processRequest(req)
 
     res = json.dumps(res, indent=4)
-    # print(res)
+    print("Result: ")
+    print(res)
     r = make_response(res)
     # r = make_response("Hello")
     r.headers['Content-Type'] = 'application/json'
@@ -41,36 +42,42 @@ def webhook():
 
 def processRequest(req):
     print("Processing Request: sessionId" + req.get("sessionId"))
-    
-    if req.get("result").get("action") == "add_symptom":
-        print("Action: add_symptom")
-        if len(req.get("result").get("parameters").get("Symptoms")) == 0:
-            outStr = "Couldn't Understand the symptom. Kindly rephrase ur query."
+    try:    
+        if req.get("result").get("action") == "add_symptom":
+            print("Action: add_symptom")
+            if len(req.get("result").get("parameters").get("Symptoms")) == 0:
+                print("No Symptom Found")
+                outStr = "Couldn't Understand the symptom. Kindly rephrase ur query."
+            else:
+                print("Symptoms Found")
+                addSymptomInList(req)
+                outStr = "Do You have any other symptom"
+
+        elif req.get("result").get("action") == "predict_disease":
+            print("Action: predict_disease")
+            outStr = predictDisease(req)
+        
         else:
-            addSymptomInList(req)
-            outStr = "Do You have any other symptom"
-
-    elif req.get("result").get("action") == "predict_disease":
-        print("Action: predict_disease")
-        outStr = predictDisease(req)
-    
-    else:
-        print("No action Detected")
+            print("No action Detected")
+            return {}
+        
+        res = makeWebhookResult(outStr)
+        return res
+    except Exception as e:
+        print("Error in Process Request. + " + e)
         return {}
-    
-    res = makeWebhookResult(outStr)
-    return res
-
 
 def addSymptomInList(req):
-    symptoms = req.get("result").get("parameters").get("Symptoms")    #List of string
-    sessionId = req.get("sessionId")                #String
-    if sessionId in UserSymptomsData:
-        UserSymptomsData[sessionId] += symptoms
-    else:
-        UserSymptomsData = symptoms
-    print("Added following symptom: in session " + str(sessionId) + " ".join(symptoms))
-
+    try:
+        symptoms = req.get("result").get("parameters").get("Symptoms")    #List of string
+        sessionId = req.get("sessionId")                #String
+        if sessionId in UserSymptomsData:
+            UserSymptomsData[sessionId] += symptoms
+        else:
+            UserSymptomsData[sessionId] = symptoms
+        print("Added following symptom: in session " + str(sessionId) + " ".join(symptoms))
+    except Exception as e:
+        print("Error in Process Request. + " + e)
 
 def predictDisease(req):
     sessionId = req.get("sessionId")                #String
