@@ -20,6 +20,8 @@ app = Flask(__name__)
 
 #Global Variables
 UserSymptomsData = dict()   #Stores user symptoms. Key: sessionId, Data: List of Symptoms
+SymptomList = []            #List of all symptoms
+
 
 
 @app.route('/webhook', methods=['POST'])
@@ -45,12 +47,13 @@ def processRequest(req):
     try:    
         if req.get("result").get("action") == "add_symptom":
             print("Action: add_symptom")
-            if len(req.get("result").get("parameters").get("Symptoms")) == 0:
+            symptoms = retrieveSymptom(req)
+            if len(symptoms) == 0:
                 print("No Symptom Found")
                 outStr = "Couldn't Understand the symptom. Kindly rephrase ur query."
             else:
                 print("Symptoms Found")
-                addSymptomInList(req)
+                addSymptomInList(req, symptoms)
                 outStr = "Do You have any other symptom"
 
         elif req.get("result").get("action") == "predict_disease":
@@ -67,9 +70,24 @@ def processRequest(req):
         print("Error in Process Request. + " + e)
         return {}
 
-def addSymptomInList(req):
+def retrieveSymptom(req):
+    sent = req.get("result").get("resolvedQuery").lower()
+    ans = []
+    for symptom in SymptomList:
+        delimiters = " ", "-"
+        regexPattern = '|'.join(map(re.escape, delimiters))
+        words = re.split(regexPattern, symptom)
+        check = True
+        for word in words:
+            if word not in sent:
+                check = False
+                break
+        ans.append(symptom)
+        return ans
+
+def addSymptomInList(req, symptoms):
     try:
-        symptoms = req.get("result").get("parameters").get("Symptoms")    #List of string
+        # symptoms = req.get("result").get("parameters").get("Symptoms")    #List of string
         sessionId = req.get("sessionId")                #String
         if sessionId in UserSymptomsData:
             UserSymptomsData[sessionId] += symptoms
@@ -101,4 +119,7 @@ if __name__ == '__main__':
 
     print("Starting app on port %d" % port)
 
+    with open("allsymptoms.txt", 'rb') as f:
+        SymptomList = f.read().split("\n")
+        print("Loaded all symptoms, Length: %d", len(SymptomList))
     app.run(debug=False, port=port, host='0.0.0.0')
