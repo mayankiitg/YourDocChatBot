@@ -11,7 +11,7 @@ from urllib.error import HTTPError
 import csv
 
 import json
-import os,re
+import os,re,numpy
 import NaiveBayes
 from flask import Flask
 from flask import request
