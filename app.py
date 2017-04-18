@@ -8,19 +8,24 @@ from urllib.parse import urlparse, urlencode
 from urllib.request import urlopen, Request
 from urllib.error import HTTPError
 
-import json
-import os,re
+import csv
 
+import json
+import os,re,numpy
+import NaiveBayes
 from flask import Flask
 from flask import request
 from flask import make_response
+#import global variables
+from globalData import *
 
+from numpy import genfromtxt, savetxt
 # Flask app should start in global layout
 app = Flask(__name__)
 
 #Global Variables
 UserSymptomsData = dict()   #Stores user symptoms. Key: sessionId, Data: List of Symptoms
-SymptomList = []            #List of all symptoms
+# SymptomList = []            #List of all symptoms
 
 
 
@@ -84,7 +89,7 @@ def retrieveSymptom(req):
     print("Inside retrieveSymptom")
     try:
         sent = req.get("result").get("resolvedQuery").lower()
-        for symptom in SymptomList:
+        for symptom in symp:
             # delimiters = " ", "-"
             # regexPattern = '|'.join(map(re.escape, delimiters))
             # words = re.split(regexPattern, symptom)
@@ -113,8 +118,15 @@ def addSymptomInList(req, symptoms):
         print("Error in Process Request. + " )
 
 def predictDisease(req):
+
     sessionId = req.get("sessionId")                #String
-    return "Symptoms are " + (", ".join(UserSymptomsData[sessionId]))
+    #return "Symptoms are " + (", ".join(UserSymptomsData[sessionId]))
+    disease_predict = NaiveBayes.predict_disease(UserSymptomsData[sessionId])
+    reply = "The top 3 predicted diseases for you along with probab:\n"
+    reply = reply + "disease: " + disease_predict[0][0] + " with probab: " + str(disease_predict[0][1]) + "\n"
+    reply = reply + "disease: " + disease_predict[1][0] + " with probab: " + str(disease_predict[1][1]) + "\n"
+    reply = reply + "disease: " + disease_predict[2][0] + " with probab: " + str(disease_predict[2][1]) + "\n"
+    return reply
 
 def makeWebhookResult(outStr):
     print("Response:")
@@ -130,11 +142,27 @@ def makeWebhookResult(outStr):
 
 
 if __name__ == '__main__':
+    dataset = genfromtxt(open('dataset1.csv','r'), delimiter=',', dtype='f8')[1:]   
+    target = [int(x[407])-1 for x in dataset]
+    train = [x[0:405] for x in dataset]
+    mnb_classifier = mnb_classifier.fit(train,target)
     port = int(os.getenv('PORT', 5000))
 
-    print("Starting app on port %d" % port)
 
-    with open("allsymptoms.txt", 'rb') as f:
-        SymptomList = f.read().split("\n")
-        print("Loaded all symptoms, Length: %d", len(SymptomList))
+    print("Starting app on port %d" % port)
+    with open("nodetable.csv","r") as csvfile:
+        reader = csv.reader(csvfile)
+        symp = []
+        dise = []
+        for row in reader:
+            if row[2] == 'symptom':
+                symp.append(row[1])
+            if row[2] == 'disease':
+                dise.append(row[1])
+
+    #with open("allsymptoms.txt", 'rb') as f:
+    #SymptomList = f.read().split("\n")
+    print("Loaded all symptoms, Length: %d", len(symp))
     app.run(debug=False, port=port, host='0.0.0.0')
+
+
