@@ -12,6 +12,10 @@ with open("nodetable.csv","r") as csvfile:
             symp.append(row[1])
         if row[2] == 'disease':
             dise.append(row[1])
+    print dise, len(dise)
+    print symp, len(symp)
+
+
 
 def predictDisease(symptoms):
     #create the training & test sets, skipping the header row with [1:]

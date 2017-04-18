@@ -61,6 +61,14 @@ def processRequest(req):
             print("Action: predict_disease")
             outStr = predictDisease(req)
         
+        elif req.get("result").get("action") == "flush_session":
+            print("Good Bye message")
+            sessionId = req.get("sessionId")                #String
+            if sessionId in UserSymptomsData:
+                print("session data deleted..")
+                UserSymptomsData.pop(sessionId, None)
+            return {}
+
         else:
             print("No action Detected")
             return {}
