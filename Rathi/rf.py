@@ -18,10 +18,7 @@ def predictDisease(symptoms):
     dataset = genfromtxt(open('dataset1.csv','r'), delimiter=',', dtype='f8')[1:]   
     target = [x[407] for x in dataset]
     train = [x[0:405] for x in dataset]
-
-    print target[:5]
-    print train[:5]
-    # test = genfromtxt(open('test.csv','r'), delimiter=',', dtype='f8')[1:]
+    test = genfromtxt(open('test.csv','r'), delimiter=',', dtype='f8')[1:]
     
     #create and train the random forest
     #multi-core CPUs can use: rf = RandomForestClassifier(n_estimators=100, n_jobs=2)
@@ -40,5 +37,3 @@ def predictDisease(symptoms):
     savetxt('submission2.csv', rf.predict_proba([check]), delimiter=',', fmt='%f')
     
     # savetxt('submission2.csv', rf.predict_proba(test), delimiter=',', fmt='%f')
-
-predictDisease(['fever','snuffle','throat sore','malaise' ])
